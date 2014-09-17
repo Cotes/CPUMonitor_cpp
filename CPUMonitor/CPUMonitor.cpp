@@ -3,7 +3,7 @@
 
 #include "stdafx.h"
 
-static void show_usage(std::string name)
+static void showUsage(std::string name)
 {
     std::cerr << "Usage: " << name << " <option(s)>"
               << "Options:\n"
@@ -14,51 +14,24 @@ static void show_usage(std::string name)
               << std::endl;
 }
 
-int main(int argc, char* argv[])
-{
-	
-    int option = 0;
-    int interval = -1, duration = -1;
-    std::string outputPath;
+void saveTrace(std::string path, std::vector<int> cpuValues, SYSTEMTIME st, SYSTEMTIME et) {
 
-    if (argc < 6) {
-        show_usage(argv[0]);
-        return 1;
-    }
+	char stMessage[20];
+	sprintf(stMessage, "%02d:%02d:%02d.%03d", st.wHour, st.wMinute, st.wSecond, st.wMilliseconds);
 
-    for (int i = 1; i < argc; ++i) {
-        std::string arg = argv[i];
-        if ((arg == "-h") || (arg == "--help")) {
-            show_usage(argv[0]);
-            return 0;
-        } else if ((arg == "-d") || (arg == "--duraton")) {
-            if (i + 1 < argc) { // Make sure we aren't at the end of argv!
-                i++;
-                duration = atoi(argv[i]);
-            } else {
-                  std::cerr << "--duration option requires one argument." << std::endl;
-                return 1;
-            }  
-        } else if ((arg == "-i") || (arg == "--interval")) {
-            if (i + 1 < argc) { // Make sure we aren't at the end of argv!
-                i++;
-                interval = atoi(argv[i]);
-            } else {
-                  std::cerr << "--interval option requires one argument." << std::endl;
-                return 1;
-            }  
-        } else if ((arg == "-o") || (arg == "--output")) {
-            if (i + 1 < argc) { // Make sure we aren't at the end of argv!
-                i++;
-                outputPath = argv[i];
-            } else {
-                  std::cerr << "--output option requires one argument." << std::endl;
-                return 1;
-            }  
-        }
-    }
+	char etMessage[20];
+	sprintf(etMessage, "%02d:%02d:%02d.%03d", et.wHour, et.wMinute, et.wSecond, et.wMilliseconds);
 
-    std::vector<int> cpuValues;
+    std::ofstream outputFile(path);
+	outputFile << stMessage << " - " << etMessage << std::endl;
+    std::ostream_iterator<int> outputIterator(outputFile, "\n");
+    std::copy(cpuValues.begin(), cpuValues.end(), outputIterator);
+
+}
+
+void getCPUConsumption(int duration, int interval, std::string path){
+
+	std::vector<int> cpuValues;
 
     duration *= 1000;
     duration /= interval;
@@ -106,19 +79,58 @@ int main(int argc, char* argv[])
         i++;
     }
 
-    SYSTEMTIME et;
+	SYSTEMTIME et;
     GetSystemTime(&et);
 
-	char stMessage[20];
-	sprintf(stMessage, "%02d:%02d:%02d.%03d", st.wHour, st.wMinute, st.wSecond, st.wMilliseconds);
+	saveTrace(path, cpuValues, st, et);
+    
+}
 
-	char etMessage[20];
-	sprintf(etMessage, "%02d:%02d:%02d.%03d", et.wHour, et.wMinute, et.wSecond, et.wMilliseconds);
+int main(int argc, char* argv[])
+{
+	
+    int option = 0;
+    int interval = -1, duration = -1;
+    std::string outputPath;
 
-    std::ofstream outputFile(outputPath);
-	outputFile << stMessage << " - " << etMessage << std::endl;
-    std::ostream_iterator<int> outputIterator(outputFile, "\n");
-    std::copy(cpuValues.begin(), cpuValues.end(), outputIterator);
+    if (argc < 6) {
+        showUsage(argv[0]);
+        return 1;
+    }
+
+    for (int i = 1; i < argc; ++i) {
+        std::string arg = argv[i];
+        if ((arg == "-h") || (arg == "--help")) {
+            showUsage(argv[0]);
+            return 0;
+        } else if ((arg == "-d") || (arg == "--duraton")) {
+            if (i + 1 < argc) { // Make sure we aren't at the end of argv!
+                i++;
+                duration = atoi(argv[i]);
+            } else {
+                  std::cerr << "--duration option requires one argument." << std::endl;
+                return 1;
+            }  
+        } else if ((arg == "-i") || (arg == "--interval")) {
+            if (i + 1 < argc) { // Make sure we aren't at the end of argv!
+                i++;
+                interval = atoi(argv[i]);
+            } else {
+                  std::cerr << "--interval option requires one argument." << std::endl;
+                return 1;
+            }  
+        } else if ((arg == "-o") || (arg == "--output")) {
+            if (i + 1 < argc) { // Make sure we aren't at the end of argv!
+                i++;
+                outputPath = argv[i];
+            } else {
+                  std::cerr << "--output option requires one argument." << std::endl;
+                return 1;
+            }  
+        }
+    }
+
+	getCPUConsumption(duration, interval, outputPath);
 
     return 0;
 }
