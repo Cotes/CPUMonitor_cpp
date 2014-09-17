@@ -16,7 +16,7 @@ static void show_usage(std::string name)
 
 int main(int argc, char* argv[])
 {
-
+	
     int option = 0;
     int interval = -1, duration = -1;
     std::string outputPath;
@@ -63,6 +63,10 @@ int main(int argc, char* argv[])
     duration *= 1000;
     duration /= interval;
     int i = 0;
+
+    SYSTEMTIME st;
+    GetSystemTime(&st);
+
     while (i < duration) {
         FILETIME old_idleTime;
         FILETIME old_kernelTime;
@@ -102,7 +106,17 @@ int main(int argc, char* argv[])
         i++;
     }
 
+    SYSTEMTIME et;
+    GetSystemTime(&et);
+
+	char stMessage[20];
+	sprintf(stMessage, "%02d:%02d:%02d.%03d", st.wHour, st.wMinute, st.wSecond, st.wMilliseconds);
+
+	char etMessage[20];
+	sprintf(etMessage, "%02d:%02d:%02d.%03d", et.wHour, et.wMinute, et.wSecond, et.wMilliseconds);
+
     std::ofstream outputFile(outputPath);
+	outputFile << stMessage << " - " << etMessage << std::endl;
     std::ostream_iterator<int> outputIterator(outputFile, "\n");
     std::copy(cpuValues.begin(), cpuValues.end(), outputIterator);
 

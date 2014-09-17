@@ -16,5 +16,6 @@
 #include <vector>
 #include <iterator>
 #include <fstream>
+#include <atlstr.h>
 
 // TODO: reference additional headers your program requires here
